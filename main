@@ -1,0 +1,67 @@
+getwd()
+setwd("/Users/danikay/desktop")
+mydata1<-read.csv("train_2016_v2-2.csv")
+mydata1
+mydata2<-read.csv("properties_2016-2.csv")
+mydata2[1:10,]#get the first 10 observations if the sample size is big.
+mydata<-merge(mydata1,mydata2,by="parcelid",all= TRUE)#merge two datasets
+mydata[1:10,]
+#######Randomly select 5% n
+datasample = mydata[sample(nrow(mydata),150000),]
+datasample1 <- datasample[-c(10,27,29,30,31,42)]
+datasample1[1:10,]
+install.packages("xlsx")
+write.xlsx(datasample,"/Users/danikay/desktop")
+write.table(datasample,"/Users/danikay/desktop/mysampledata.txt",sep="\t")
+
+
+#deleting
+datasample$decktypeid <- NULL
+datasample$poolcnt <- NULL
+datasample$pooltypeid10 <- NULL
+datasample$pooltypeid2 <- NULL
+datasample$pooltypeid7 <- NULL
+datasample$storytypeid <- NULL
+summary(datasample)
+attach(datasample)
+boxplot(datasample$landtaxvaluedollarcnt)
+boxplot(datasample$structuretaxvaluedollarcnt)
+boxplot(datasample$taxdelinquencyyear)
+#full modelling
+fitfull = lm(logerror~.,data=datasample) #full model
+summary(fitfull)
+
+datasample$hashottuborspa[datasample$hashottuborspa=="true"] <- 1
+datasample$hashottuborspa[datasample$hashottuborspa==""] <- 0
+
+
+datasample$taxdelinquencyflag[is.na(datasample$taxdelinquencyflag)] <- 1
+
+datasample$taxdelinquencyflag[is.null] = 0
+
+datasample[datasample$taxdelinquencyflag == " "] <- 0
+datasample[datasample$taxdelinquencyflag == "Y"] <- 1
+
+summary(datasample$buildingqualitytypeid)
+
+
+
+
+attach(datasample)
+####basic model: construct a linear regression model with 5 variables
+fitbasic=lm(logerror ~ calculatedbathnbr+calculatedfinishedsquarefeet+hashottuborspa+regionidcity+roomcnt,data=datasample)
+summary(fitbasic)
+###full model: include  all predictors 
+
+summary(datasample)#teae out variables that have one value
+fitfull = lm(logerror~.,data=datasample)#full model
+summary(fitfull)
+fitfull.1=step(fitfull,direction = "both")##model selection
+
+fitfull=lm(logerror ~ .,data=datasample)
+summary(fitfull)
+
+###test for correlation
+cor.test(finishedsquarefeet12,logerror,method=c("pearson"))
+cor.test(finishedsquarefeet13,logerror,method=c("pearson"))
+cor.test(finishedsquarefeet50,logerror,method=c("pearson"))
